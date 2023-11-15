@@ -1,0 +1,13 @@
+_target_: opr.models.place_recognition.base.ImageModel
+
+backbone:
+  _target_: opr.modules.feature_extractors.ConvNeXtTinyFeatureExtractor
+  in_channels: 3
+  pretrained: True
+head:
+  _target_: torch.nn.Sequential
+  _args_:
+    - _target_: opr.modules.GeM
+    - _target_: torch.nn.Linear
+      in_features: 768
+      out_features: 256
