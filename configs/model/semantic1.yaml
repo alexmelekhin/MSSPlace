@@ -1,0 +1,6 @@
+_target_: opr.models.place_recognition.SemanticResNet18
+
+in_channels: 1
+out_channels: 256
+num_top_down: 0
+pooling: gem

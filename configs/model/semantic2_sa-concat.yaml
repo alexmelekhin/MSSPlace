@@ -1,0 +1,17 @@
+_target_: opr.models.place_recognition.base.SemanticModel
+
+backbone:
+  _target_: opr.modules.feature_extractors.ResNet18FPNFeatureExtractor
+  in_channels: 1
+  lateral_dim: 256
+  fh_num_bottom_up: 4
+  fh_num_top_down: 0
+  pretrained: False
+head:
+  _target_: opr.modules.GeM
+fusion:
+  _target_: torch.nn.Sequential
+  _args_:
+    - _target_: opr.modules.SelfAttention
+      embed_size: 256
+    - _target_: opr.modules.Concat
