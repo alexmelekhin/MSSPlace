@@ -1,4 +1,4 @@
-"""NCLT dataset implementation."""
+"""Datasets implementation."""
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
@@ -222,7 +222,7 @@ class NCLTDatasetWithText(BasePlaceRecognitionDataset):
                 cam_name = data_source[5:]  # remove "text_" prefix
                 image_ts = int(row["image"])
                 text_filepath = track_dir / self._text_embeddings_dirname / f"{cam_name}" / f"{image_ts}.pt"
-                text_embedding = torch.load(text_filepath).squeeze()
+                text_embedding = torch.load(text_filepath, map_location="cpu").squeeze()
                 data[data_source] = text_embedding
             elif data_source == "pointcloud_lidar":
                 pc_filepath = track_dir / self._pointclouds_dirname / f"{row['pointcloud']}.bin"
@@ -421,7 +421,7 @@ class OxfordDatasetWithText(BasePlaceRecognitionDataset):
                 cam_name = data_source[5:]  # remove "text_" prefix
                 image_ts = int(row[cam_name])
                 text_filepath = track_dir / self._text_embeddings_dirname / f"{cam_name}" / f"{image_ts}.pt"
-                text_embedding = torch.load(text_filepath).squeeze()
+                text_embedding = torch.load(text_filepath, map_location="cpu").squeeze()
                 data[data_source] = text_embedding
             elif data_source == "pointcloud_lidar":
                 pc_filepath = track_dir / self._pointclouds_dirname / f"{row['pointcloud']}.bin"

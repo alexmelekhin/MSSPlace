@@ -1,0 +1,18 @@
+_target_: src.datasets.NCLTDatasetWithText
+
+dataset_root: /path/to/dataset
+data_to_load: [text_Cam5,]
+positive_threshold: 10.0
+negative_threshold: 50.0
+images_dirname: images_small
+masks_dirname: segmentation_masks_small
+text_embeddings_dirname: clip-vit-large-patch14
+pointclouds_dirname: velodyne_data
+pointcloud_quantization_size: 0.5
+max_point_distance: 100.0
+spherical_coords: False
+use_intensity_values: False
+image_transform: null
+semantic_transform: null
+pointcloud_transform: null
+pointcloud_set_transform: null

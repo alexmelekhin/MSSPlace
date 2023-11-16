@@ -1,0 +1,9 @@
+_target_: src.models.TextModel
+
+model:
+  _target_: opr.modules.MLP
+  in_features: 768
+  out_features: 256
+  drop: 0.5
+fusion:
+  _target_: opr.modules.Add
