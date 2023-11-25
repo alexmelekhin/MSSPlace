@@ -1,0 +1,19 @@
+_target_: src.datasets.OxfordDatasetWithText
+
+dataset_root: /path/to/dataset
+data_to_load: [image_stereo_centre, image_mono_left, image_mono_rear, image_mono_right,
+               text_stereo_centre, text_mono_left, text_mono_rear, text_mono_right,
+               pointcloud_lidar,]
+positive_threshold: 10.0
+negative_threshold: 50.0
+images_dirname: images_small
+masks_dirname: segmentation_masks_small
+text_embeddings_dirname: clip-vit-base-patch32
+pointclouds_dirname: null
+pointcloud_quantization_size: 0.01
+max_point_distance: null
+spherical_coords: False
+image_transform: null
+semantic_transform: null
+pointcloud_transform: null
+pointcloud_set_transform: null
