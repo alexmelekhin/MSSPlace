@@ -1,43 +1,20 @@
-FROM nvcr.io/nvidia/cuda:11.3.1-cudnn8-devel-ubuntu20.04
+FROM alexmelekhin/open-place-recognition:base
 
-ENV DEBIAN_FRONTEND noninteractive
-
-# Install system dependencies for convinient development inside container
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-    curl \
-    git \
-    wget \
-    vim \
-    sudo \
-    tar \
-    unzip \
-    openssh-server \
-    python3-pip \
-    build-essential \
-    ninja-build \
-    cmake \
-    swig \
-    libopenblas-dev \
-    ffmpeg \
-    libsm6 \
-    libxext6 \
-    libssl-dev \
-    zlib1g-dev \
-    libbz2-dev \
-    libreadline-dev \
-    libsqlite3-dev\
-    libncursesw5-dev \
-    xz-utils \
-    tk-dev \
-    libxml2-dev \
-    libxmlsec1-dev \
-    libffi-dev \
-    liblzma-dev \
     libcairo2-dev \
+    libgirepository1.0-dev \
+    libdbus-1-dev \
+    libdbus-glib-1-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# symlink for python3
-RUN ln -s /usr/bin/python3 /usr/bin/python
+# to install "dvc[gdrive]" we need to install "distro" package first
+ARG DISTRO_VERSION=1.9.0
+RUN pip install distro==${DISTRO_VERSION}
+
+# install other requirements from requirements.txt
+COPY requirements.txt .
+RUN pip install -r requirements.txt && \
+    rm requirements.txt
 
 # add user and his password
 ENV USER=docker_mssplace
@@ -54,40 +31,6 @@ RUN mkdir MSSPlace && chown -R ${UID}:${GID} /home/${USER}
 RUN mkdir Datasets && chown -R ${UID}:${GID} /home/${USER}
 
 USER ${UID}:${GID}
-
-ENV PATH="/home/${USER}/.local/bin:$PATH"
-
-# upgrade pip
-ARG PIP_VERSION=23.3.1
-ARG SETUPTOOLS_VERSION=68.2.2
-RUN pip install pip==${PIP_VERSION} setuptools==${SETUPTOOLS_VERSION}
-
-# install pytorch 1.12.1 and torchvision
-# it may take a long time, so it is better be done in separate 'layer'
-RUN pip install --user \
-    torch==1.12.1+cu113 \
-    torchvision==0.13.1+cu113 \
-    --extra-index-url https://download.pytorch.org/whl/cu113
-
-# install MinkowskiEngine
-RUN pip install --user ninja==1.11.1.1
-ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6"
-ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
-ENV CUDA_HOME=/usr/local/cuda-11.3
-ENV MAX_JOBS=4
-RUN git clone --recursive "https://github.com/NVIDIA/MinkowskiEngine" && \
-    cd MinkowskiEngine && \
-    git checkout 02fc608 && \
-    FORCE_CUDA=1 pip install --user . \
-        --global-option="--force_cuda" \
-        --global-option="--blas=openblas" && \
-    cd .. && \
-    rm -rf MinkowskiEngine
-
-# install other requirements from requirements.txt
-COPY requirements.txt .
-RUN pip install -r requirements.txt && \
-    rm requirements.txt
 
 # install OpenPlaceRecognition library
 COPY --chown=${UID}:${GID} ./third_party/OpenPlaceRecognition ./OpenPlaceRecognition
