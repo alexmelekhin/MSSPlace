@@ -4,6 +4,12 @@ This repository contains the code for the paper "MSSPlace: Multi-Sensor Place Re
 
 # Installation
 
+Make sure you've initialized and loaded the submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
 We highly recommend using provided Dockerfile ([docker/Dockerfile.cuda](./docker/Dockerfile.cuda)) to install all the dependencies. You can build the docker image using the following command:
 
 ```bash
