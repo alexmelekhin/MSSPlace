@@ -1,5 +1,6 @@
 checkpoints/
 outputs/
+.ruff_cache/
 
 ### Defaults for Python:
 
