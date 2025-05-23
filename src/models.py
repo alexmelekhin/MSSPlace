@@ -1,8 +1,34 @@
 """Models implementation"""
 from typing import Dict, Optional
 
+import torch
 from torch import Tensor, nn
 from opr.modules import Concat
+from opr.modules.gem import SeqGeM
+
+
+class GeMMultiFeatureMapsFusion(nn.Module):
+    """GeM fusion module for multiple 2D feature maps."""
+
+    def __init__(self, p: int = 3, eps: float = 1e-6) -> None:
+        """Generalized-Mean fusion module.
+
+        Args:
+            p (int): Initial value of learnable parameter 'p', see paper for more details. Defaults to 3.
+            eps (float): Negative values will be clamped to `eps` (ReLU). Defaults to 1e-6.
+        """
+        super().__init__()
+        self.gem = SeqGeM(p=p, eps=eps)
+
+    def forward(self, data: Dict[str, Tensor]) -> Tensor:  # noqa: D102
+        data = {key: value for key, value in data.items() if value is not None}
+        features = list(data.values())
+        features = [f.view(f.shape[0], f.shape[1], -1) for f in features]
+        features = torch.cat(features, dim=-1)
+        out = self.gem(features)
+        if len(out.shape) == 1:
+            out = out.unsqueeze(0)
+        return out
 
 
 class TextModel(nn.Module):
