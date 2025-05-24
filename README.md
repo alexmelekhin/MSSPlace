@@ -23,8 +23,8 @@ Evaluate pre-trained models on Oxford RobotCar or NCLT datasets:
 
 ```bash
 # Download checkpoints and datasets first (see sections below)
-python evaluate_checkpoints.py --dataset oxford --model mssplace-li
-python evaluate_checkpoints.py --dataset nclt --model mssplace-list --verbose
+python scripts/evaluation/evaluate_checkpoints.py --dataset oxford --model mssplace-li
+python scripts/evaluation/evaluate_checkpoints.py --dataset nclt --model mssplace-list --verbose
 ```
 
 ## Evaluation
@@ -64,10 +64,17 @@ python evaluate_checkpoints.py --dataset nclt --model mssplace-list --verbose
 
 ```
 /home/docker_mssplace/
-├── MSSPlace/                    # This repository
-│   ├── evaluate_checkpoints.py
-│   └── checkpoints/             # Downloaded checkpoints
-└── Datasets/                    # Dataset directory (configurable with --datasets-dir)
+├── MSSPlace/                           # This repository
+│   ├── checkpoints/                   # Downloaded checkpoints
+│   ├── configs/                       # Configuration files
+│   ├── docker/                        # Docker environment setup
+│   ├── docs/                          # Documentation and examples
+│   ├── images/                        # Example images and figures
+│   ├── scripts/                       # Organized scripts
+│   ├── src/                           # Core source code
+│   └── third_party/                   # External dependencies
+│       └── OpenPlaceRecognition/      # Core OPR library
+└── Datasets/                           # Dataset directory (configurable with --datasets-dir)
     ├── pnvlad_oxford_robotcar/
     └── NCLT_preprocessed/
 ```
@@ -78,9 +85,23 @@ python evaluate_checkpoints.py --dataset nclt --model mssplace-list --verbose
 |----------|---------|-------------|
 | `--dataset` | *Required* | `oxford` or `nclt` |
 | `--model` | *Required* | Model variant (see table above) |
-| `--datasets-dir` | `/home/docker_mssplace/Datasets` | Path to datasets |
-| `--batch-size` | `32` | Batch size |
-| `--verbose` | `False` | Detailed logging |
+| `--datasets-dir` | `/home/docker_mssplace/Datasets` | Path to datasets directory |
+| `--checkpoints-dir` | `./checkpoints` | Path to model checkpoints |
+| `--configs-dir` | `./configs/model` | Path to model configurations |
+| `--batch-size` | `32` | Evaluation batch size |
+| `--verbose` | `False` | Enable detailed logging |
+
+**Example Usage:**
+```bash
+# Basic evaluation
+python scripts/evaluation/evaluate_checkpoints.py --dataset oxford --model mssplace-li
+
+# Custom dataset location
+python scripts/evaluation/evaluate_checkpoints.py \
+    --dataset nclt --model mssplace-lis \
+    --datasets-dir /path/to/your/datasets \
+    --verbose
+```
 
 ## Training (Optional)
 

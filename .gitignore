@@ -2,6 +2,9 @@ checkpoints/
 outputs/
 .ruff_cache/
 
+# Development and organization files (keep local, don't publish)
+ORGANIZATION.md
+
 ### Defaults for Python:
 
 # Byte-compiled / optimized / DLL files
