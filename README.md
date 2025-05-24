@@ -32,19 +32,21 @@ python evaluate_checkpoints.py --dataset nclt --model mssplace-list --verbose
 
 ### Model Variants
 
-| Model | Modalities | AR@1 (NCLT) | AR@1% (NCLT) | Description |
-|-------|------------|-------------|--------------|-------------|
-| `mssplace-li` | LiDAR + Images | 94.67% | 97.72% | Basic multimodal |
-| `mssplace-lis` | LiDAR + Images + Semantic | **95.37%** | **97.84%** | Adds semantic segmentation |
-| `mssplace-lit` | LiDAR + Images + Text | 92.36% | 96.51% | Adds text descriptions |
-| `mssplace-list` | LiDAR + Images + Semantic + Text | 94.15% | 96.97% | Complete multimodal |
+| Model | Modalities | AR@1 (Oxford) | AR@1% (Oxford) | AR@1 (NCLT) | AR@1% (NCLT) | Description |
+|-------|------------|---------------|----------------|-------------|--------------|-------------|
+| `mssplace-li` | LiDAR + Images | 98.21% | 99.53% | 94.67% | 97.72% | Basic multimodal |
+| `mssplace-lis` | LiDAR + Images + Semantic | **98.55%** | **99.64%** | **95.37%** | **97.84%** | Adds semantic segmentation |
+| `mssplace-lit` | LiDAR + Images + Text | 98.22% | 99.53% | 92.36% | 96.51% | Adds text descriptions |
+| `mssplace-list` | LiDAR + Images + Semantic + Text | **98.55%** | **99.64%** | 94.15% | 96.97% | Complete multimodal |
 
-*Performance metrics measured on NCLT dataset. Best results highlighted in bold.*
+*Performance metrics measured on Oxford RobotCar and NCLT datasets. Best results per dataset highlighted in bold.*
 
 **Key Insights:**
-- `mssplace-lis` achieves the best performance, showing that semantic segmentation may help place recognition
-- Text descriptions in `mssplace-lit` appear to hurt performance compared to the base `mssplace-li` model
-- The complete multimodal `mssplace-list` performs well but doesn't exceed the semantic-only variant
+- `mssplace-lis` achieves the best performance on NCLT, while both `mssplace-lis` and `mssplace-list` tie for best on Oxford
+- Semantic segmentation consistently helps place recognition across both datasets
+- Text modality shows dataset-dependent behavior: hurts performance on NCLT but is neutral on Oxford
+- Oxford dataset appears easier than NCLT (all models achieve >98% vs 92-95% AR@1)
+- The complete multimodal `mssplace-list` performs well but doesn't consistently exceed semantic-only variants
 
 ### Pre-trained Checkpoints
 
