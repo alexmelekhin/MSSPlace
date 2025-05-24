@@ -25,14 +25,26 @@ python evaluate_checkpoints.py --dataset nclt --model mssplace-list --verbose
 
 ## Evaluation
 
+### Performance Metrics
+
+- **AR@1**: Accuracy (%) when considering top-1 retrieval match
+- **AR@1%**: Accuracy (%) when considering top-1% of database as potential matches
+
 ### Model Variants
 
-| Model | Modalities | Description |
-|-------|------------|-------------|
-| `mssplace-li` | LiDAR + Images | Basic multimodal |
-| `mssplace-lis` | LiDAR + Images + Semantic | Adds semantic segmentation |
-| `mssplace-lit` | LiDAR + Images + Text | Adds text descriptions |
-| `mssplace-list` | LiDAR + Images + Semantic + Text | Complete multimodal |
+| Model | Modalities | AR@1 (NCLT) | AR@1% (NCLT) | Description |
+|-------|------------|-------------|--------------|-------------|
+| `mssplace-li` | LiDAR + Images | 94.67% | 97.72% | Basic multimodal |
+| `mssplace-lis` | LiDAR + Images + Semantic | **95.37%** | **97.84%** | Adds semantic segmentation |
+| `mssplace-lit` | LiDAR + Images + Text | 92.36% | 96.51% | Adds text descriptions |
+| `mssplace-list` | LiDAR + Images + Semantic + Text | 94.15% | 96.97% | Complete multimodal |
+
+*Performance metrics measured on NCLT dataset. Best results highlighted in bold.*
+
+**Key Insights:**
+- `mssplace-lis` achieves the best performance, showing that semantic segmentation may help place recognition
+- Text descriptions in `mssplace-lit` appear to hurt performance compared to the base `mssplace-li` model
+- The complete multimodal `mssplace-list` performs well but doesn't exceed the semantic-only variant
 
 ### Pre-trained Checkpoints
 
