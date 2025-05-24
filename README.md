@@ -2,6 +2,10 @@
 
 This repository contains the code for the paper "MSSPlace: Multi-Sensor Place Recognition with Visual and Text Semantics".
 
+![mssplace_overview](./images/mssplace_overview.jpg)
+
+_High-level overview of the proposed multimodal MSSPlace method. The MSSPlace Model has a modular architecture and consists of four branches: the Image Encoder, Semantic Masks Encoder, Text Encoder, and Point Cloud Encoder. Each branch encodes the input data into a descriptor, capturing the essential information specific to its respective modality. Subsequently, a descriptor aggregation step is performed to combine these individual descriptors and obtain the global place descriptor, which represents the comprehensive characteristics of the vehicle place._
+
 ## Installation
 
 Initialize submodules and build the Docker environment:
