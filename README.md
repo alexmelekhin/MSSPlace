@@ -2,59 +2,75 @@
 
 This repository contains the code for the paper "MSSPlace: Multi-Sensor Place Recognition with Visual and Text Semantics".
 
-# Installation
+## Installation
 
-Make sure you've initialized and loaded the submodules:
+Initialize submodules and build the Docker environment:
 
 ```bash
 git submodule update --init --recursive
-```
-
-We highly recommend using provided Dockerfile ([docker/Dockerfile.cuda](./docker/Dockerfile.cuda)) to install all the dependencies. You can build the docker image using the following command:
-
-```bash
-# from the root directory of the repository
 bash docker/build.sh
-```
-
-To start the container, run the following command. `DATASETS_DIR` is the path to the directory containing the datasets. This directory will be mounted inside the container at `/home/docker_mssplace/Datasets`.
-
-```bash
-bash docker/start.sh [DATASETS_DIR]
-```
-
-To enter the container, run the following command:
-
-```bash
+bash docker/start.sh [DATASETS_DIR]  # DATASETS_DIR will be mounted at /home/docker_mssplace/Datasets
 bash docker/into.sh
 ```
 
-# Training
+## Quick Start
 
-We use Hydra for managing configurations. You can find the configuration files in the [`configs/`](./configs/) directory. The default configuration is [`configs/train_unimodal.yaml`](./configs/train_unimodal.yaml). You can override any of the parameters in the configuration file from the command line. All neccessary config files are provided.
-
-You can use the [`train_unimodal.py`](./train_unimodal.py) script for training. For example, to train lidar-only model on the NCLT dataset, run the following command:
+Evaluate pre-trained models on Oxford RobotCar or NCLT datasets:
 
 ```bash
-python train_unimodal.py dataset=nclt/lidar dataset.dataset_root=/home/docker_mssplace/Datasets/NCLT_preprocessed model=lidar exp_name=nclt_lidar_exp
+# Download checkpoints and datasets first (see sections below)
+python evaluate_checkpoints.py --dataset oxford --model mssplace-li
+python evaluate_checkpoints.py --dataset nclt --model mssplace-list --verbose
 ```
 
-# Testing
+## Evaluation
 
-## Single-Modality
+### Model Variants
 
-To test a single-modality model, you can use the [`test.py`](./test.py) script. For example, to test the lidar-only model trained on the NCLT dataset, run the following command:
+| Model | Modalities | Description |
+|-------|------------|-------------|
+| `mssplace-li` | LiDAR + Images | Basic multimodal |
+| `mssplace-lis` | LiDAR + Images + Semantic | Adds semantic segmentation |
+| `mssplace-lit` | LiDAR + Images + Text | Adds text descriptions |
+| `mssplace-list` | LiDAR + Images + Semantic + Text | Complete multimodal |
 
-```bash
-python test.py --checkpoint outputs/nclt_lidar_exp_2023-11-16-12-25-41/checkpoints/best.pth --model_config configs/model/lidar.yaml --dataset_config configs/dataset/nclt/lidar.yaml --dataset_dir /home/docker_mssplace/Datasets/OpenPlaceRecognition/NCLT_preprocessed --batch_size 32 --device cuda
+### Pre-trained Checkpoints
+
+⚠️ **Work in Progress**: Checkpoint download links will be updated soon. Please check back later for access to pre-trained models.
+
+### Datasets
+
+⚠️ **Work in Progress**: Preprocessed datasets will be made publicly available for download soon. Please check back later for dataset access.
+
+### Directory Structure
+
+```
+/home/docker_mssplace/
+├── MSSPlace/                    # This repository
+│   ├── evaluate_checkpoints.py
+│   └── checkpoints/             # Downloaded checkpoints
+└── Datasets/                    # Dataset directory (configurable with --datasets-dir)
+    ├── pnvlad_oxford_robotcar/
+    └── NCLT_preprocessed/
 ```
 
-### Parsing results from WandB
+### Key Arguments
 
-We use [WandB](https://wandb.ai/) for logging the training and testing results. You can use the [`parse_wandb.ipynb`](./parse_wandb.ipynb) notebook to parse the results from WandB.
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `--dataset` | *Required* | `oxford` or `nclt` |
+| `--model` | *Required* | Model variant (see table above) |
+| `--datasets-dir` | `/home/docker_mssplace/Datasets` | Path to datasets |
+| `--batch-size` | `32` | Batch size |
+| `--verbose` | `False` | Detailed logging |
 
-## Multi-Modality
+## Training (Optional)
 
-As we do not train multi-modality models end-to-end, we use the following notebook to stack multiple single-modality models and test them: [`test_multimodal.ipynb`](./test_multimodal.ipynb).
+⚠️ **Work in Progress**: Training documentation and scripts will be updated soon. Please check back later for training instructions.
 
-Note that in the above notebook we use the checkpoints that was downloaded from WandB, saved together with corresponding config files and stored in the [`checkpoints/`](./checkpoints/) directory. If you want to use our checkpoints, you can download them from [Google Drive](https://drive.google.com/drive/folders/1KmIfUXtfkU1Qs4wDM-MAC86PClkn_cwB?usp=drive_link).
+## Troubleshooting
+
+- **Missing checkpoints**: Download all `.pth` files to `checkpoints/`
+- **Dataset errors**: Verify directory structure matches expected format
+- **CUDA memory**: Reduce `--batch-size` if out-of-memory
+- **Dependencies**: Use provided Docker environment
