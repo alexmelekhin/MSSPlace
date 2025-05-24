@@ -3,7 +3,7 @@ outputs/
 .ruff_cache/
 
 # Development and organization files (keep local, don't publish)
-ORGANIZATION.md
+work_in_progress/
 
 ### Defaults for Python:
 
