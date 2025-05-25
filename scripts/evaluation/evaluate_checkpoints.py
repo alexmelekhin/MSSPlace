@@ -46,11 +46,8 @@ from loguru import logger
 # Import custom modules from the OPR library
 from opr.testing import test
 
-# Import text-enabled datasets (custom module from src/)
-# Add the repository root to the path to access src/ directory
-repo_root = Path(__file__).parent.parent.parent  # Go up from scripts/evaluation/ to repo root
-sys.path.append(str(repo_root / "src"))
-from datasets import NCLTDatasetWithText, OxfordDatasetWithText  # type: ignore
+# Import text-enabled datasets from the installed mssplace package
+from mssplace.datasets import NCLTDatasetWithText, OxfordDatasetWithText
 
 
 # Configuration constants following the original notebook structure

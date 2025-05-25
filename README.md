@@ -17,6 +17,16 @@ bash docker/start.sh [DATASETS_DIR]  # DATASETS_DIR will be mounted at /home/doc
 bash docker/into.sh
 ```
 
+### Package Installation
+
+Install the MSSPlace package in editable mode for development:
+
+```bash
+pip install -e .
+```
+
+This installs the package from the `src/mssplace` directory, allowing you to import `mssplace` modules directly without path modifications.
+
 ## Quick Start
 
 Evaluate pre-trained models on Oxford RobotCar or NCLT datasets:
