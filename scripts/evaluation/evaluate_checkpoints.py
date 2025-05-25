@@ -35,6 +35,7 @@ Date: May 23, 2025
 
 import argparse
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import torch
@@ -44,7 +45,7 @@ from torch.utils.data import DataLoader
 from loguru import logger
 
 # Import custom modules from the OPR library
-from opr.testing import test
+from opr.testers.place_recognition.model import ModelTester, RetrievalResultsCollection
 
 # Import text-enabled datasets from the installed mssplace package
 from mssplace.datasets import NCLTDatasetWithText, OxfordDatasetWithText
@@ -340,34 +341,135 @@ def evaluate_model(
     model: torch.nn.Module,
     dataloader: DataLoader,
     device: str,
-    distance_threshold: float = 25.0
-) -> tuple[list[float], float, float]:
+    distance_threshold: float = 25.0,
+    memory_batch_size: int | None = None,
+    verbose: bool = True,
+) -> tuple[dict[str, float], RetrievalResultsCollection]:
     """
-    Evaluate model performance on test dataset.
+    Evaluate model performance using comprehensive ModelTester.
+
+    This function leverages the advanced ModelTester class to provide detailed
+    place recognition analysis beyond simple aggregate metrics. It supports
+    memory-efficient evaluation and returns comprehensive results suitable
+    for research analysis and reproducibility.
 
     Args:
         model: PyTorch model to evaluate
         dataloader: DataLoader for test data
         device: Device to run evaluation on
         distance_threshold: Distance threshold for positive matches (meters)
+        memory_batch_size: If specified, compute distance matrix in batches
+            to reduce peak memory usage. Useful for large datasets.
+        verbose: Whether to show detailed progress information
 
     Returns:
-        Tuple of (recall_at_n, recall_at_one_percent, mean_top1_descriptor_distance)
+        Tuple containing:
+        - dict: Aggregate metrics (recall_at_n, recall_at_one_percent, etc.)
+        - RetrievalResultsCollection: Detailed per-query results for analysis
+
+    Note:
+        The memory_batch_size parameter trades computation speed for memory
+        efficiency. For datasets with >10k samples, consider using batch
+        sizes of 1000-5000 depending on available RAM.
     """
-    logger.info("Starting model evaluation...")
-    model = model.to(device)
-    model.eval()
+    logger.info("Starting comprehensive model evaluation with ModelTester...")
 
-    with torch.no_grad():
-        recall_at_n, recall_at_one_percent, mean_top1_descriptor_distance = test(
-            model=model,
-            dataloader=dataloader,
-            distance_threshold=distance_threshold,
-            device=device,
-        )
+    # Initialize ModelTester with memory-efficient settings
+    tester = ModelTester(
+        model=model,
+        dataloader=dataloader,
+        dist_thresh=distance_threshold,
+        at_n=25,  # Standard benchmark value
+        device=device,
+        verbose=verbose,
+        batch_size=memory_batch_size,  # Enable memory-efficient computation
+    )
 
-    logger.info("Model evaluation completed")
-    return recall_at_n, recall_at_one_percent, mean_top1_descriptor_distance
+    # Run comprehensive evaluation
+    results_collection = tester.run()
+
+    # Extract aggregate metrics for backward compatibility
+    aggregate_metrics = results_collection.aggregate_metrics()
+
+    # Convert to format expected by existing display logic
+    recall_at_n_array = aggregate_metrics["recall_at_n"]
+    recall_at_one_percent = aggregate_metrics["recall_at_one_percent"]
+
+    # For top1_distance, use the aggregate value or compute if None
+    top1_distance = aggregate_metrics.get("top1_distance")
+    if top1_distance is None:
+        # Fallback: compute mean embedding distance of correct top-1 matches
+        top1_distances = []
+        for result in results_collection.results:
+            if result.queries_with_matches > 0 and result.top1_distance is not None:
+                top1_distances.append(result.top1_distance)
+        top1_distance = sum(top1_distances) / len(top1_distances) if top1_distances else 0.0
+
+    # Create backward-compatible metrics dict
+    backward_compatible_metrics = {
+        "recall_at_n": recall_at_n_array,
+        "recall_at_one_percent": recall_at_one_percent,
+        "mean_top1_descriptor_distance": top1_distance,
+    }
+
+    logger.info("Comprehensive model evaluation completed")
+    logger.info(f"Processed {results_collection.num_pairs} track pairs with "
+                f"{results_collection.num_queries} total queries")
+
+    return backward_compatible_metrics, results_collection
+
+
+def save_evaluation_results(
+    results_collection: RetrievalResultsCollection,
+    dataset_name: str,
+    model_name: str,
+    results_dir: Path,
+    additional_metadata: dict | None = None,
+) -> Path:
+    """
+    Save detailed evaluation results to disk for later analysis.
+
+    Creates a structured filename and saves both the raw results collection
+    and additional metadata for research reproducibility.
+
+    Args:
+        results_collection: Detailed results from ModelTester
+        dataset_name: Name of the evaluated dataset
+        model_name: Name of the evaluated model
+        results_dir: Directory to save results
+        additional_metadata: Optional dict with extra information to save
+
+    Returns:
+        Path to the saved results file
+
+    Note:
+        Results are saved in JSON format with timestamp for uniqueness.
+        The file includes both detailed per-query results and aggregate metrics.
+    """
+    from datetime import datetime
+
+    # Create results directory if it doesn't exist
+    results_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate timestamped filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{dataset_name}_{model_name}_results_{timestamp}.json"
+    results_path = results_dir / filename
+
+    logger.info(f"Saving detailed evaluation results to: {results_path}")
+
+    # Save the results collection (includes built-in JSON serialization)
+    results_collection.save(str(results_path))
+
+    # If metadata provided, save it alongside
+    if additional_metadata:
+        metadata_path = results_dir / f"{dataset_name}_{model_name}_metadata_{timestamp}.json"
+        import json
+        with open(metadata_path, 'w') as f:
+            json.dump(additional_metadata, f, indent=2)
+        logger.info(f"Saved evaluation metadata to: {metadata_path}")
+
+    return results_path
 
 
 def format_percentage(value: float) -> str:
@@ -466,6 +568,26 @@ def main() -> None:
         help="Enable verbose logging"
     )
 
+    parser.add_argument(
+        "--memory-batch-size",
+        type=int,
+        default=None,
+        help="Batch size for memory-efficient distance computation (reduces memory usage)"
+    )
+
+    parser.add_argument(
+        "--save-results",
+        action="store_true",
+        help="Save detailed evaluation results to JSON file for later analysis"
+    )
+
+    parser.add_argument(
+        "--results-dir",
+        type=Path,
+        default=Path("./evaluation_results"),
+        help="Directory to save detailed evaluation results"
+    )
+
     args = parser.parse_args()
 
     # Setup logging
@@ -509,27 +631,79 @@ def main() -> None:
             drop_last=False,
         )
 
-        # Evaluate model
-        recall_at_n, recall_at_one_percent, mean_top1_descriptor_distance = evaluate_model(
+        # Evaluate model using comprehensive ModelTester
+        metrics, results_collection = evaluate_model(
             model=model,
             dataloader=dataloader,
             device=args.device,
-            distance_threshold=args.distance_threshold
+            distance_threshold=args.distance_threshold,
+            memory_batch_size=args.memory_batch_size,
+            verbose=args.verbose,
         )
 
-        # Display results
-        print("\n" + "="*50)
-        print("EVALUATION RESULTS")
-        print("="*50)
+        # Extract metrics for display (backward compatibility)
+        recall_at_n = metrics["recall_at_n"]
+        recall_at_one_percent = metrics["recall_at_one_percent"]
+        mean_top1_descriptor_distance = metrics["mean_top1_descriptor_distance"]
+
+        # Optionally save detailed results for research analysis
+        if args.save_results:
+            evaluation_metadata = {
+                "dataset": args.dataset,
+                "model": args.model,
+                "device": args.device,
+                "distance_threshold": args.distance_threshold,
+                "batch_size": args.batch_size,
+                "num_workers": args.num_workers,
+                "memory_batch_size": args.memory_batch_size,
+                "model_parameters": num_parameters,
+                "dataset_size": len(dataset),
+                "evaluation_timestamp": datetime.now().isoformat(),
+            }
+
+            results_path = save_evaluation_results(
+                results_collection=results_collection,
+                dataset_name=args.dataset,
+                model_name=args.model,
+                results_dir=args.results_dir,
+                additional_metadata=evaluation_metadata,
+            )
+
+            logger.info(f"Detailed results saved for future analysis: {results_path}")
+
+        # Display results with enhanced information
+        print("\n" + "="*60)
+        print("COMPREHENSIVE EVALUATION RESULTS")
+        print("="*60)
         print(f"Dataset: {args.dataset}")
         print(f"Model: {args.model}")
         print(f"Device: {args.device}")
         print(f"Distance threshold: {args.distance_threshold}m")
-        print("-"*50)
-        print(f"AR@1  = {format_percentage(recall_at_n[0])}")
-        print(f"AR@1% = {format_percentage(recall_at_one_percent)}")
-        print(f"Mean top-1 descriptor distance: {mean_top1_descriptor_distance:.6f}")
-        print("="*50)
+        if args.memory_batch_size:
+            print(f"Memory batch size: {args.memory_batch_size} (memory-efficient mode)")
+        print("-"*60)
+
+        # Traditional metrics (backward compatibility)
+        print("PLACE RECOGNITION METRICS:")
+        print(f"  AR@1  = {format_percentage(recall_at_n[0])}")
+        print(f"  AR@1% = {format_percentage(recall_at_one_percent)}")
+        print(f"  Mean top-1 descriptor distance: {mean_top1_descriptor_distance:.6f}")
+
+        # Enhanced insights from detailed analysis
+        print("\nDETAILED ANALYSIS:")
+        aggregate_metrics = results_collection.aggregate_metrics()
+        print(f"  Total track pairs evaluated: {results_collection.num_pairs}")
+        print(f"  Total query samples: {results_collection.num_queries}")
+        print(f"  Queries with ground truth matches: {aggregate_metrics['queries_with_matches']}")
+        print(f"  Overall accuracy (correct top-1): {format_percentage(aggregate_metrics['overall_accuracy'])}")
+
+        # Additional recall metrics for research insight
+        if len(recall_at_n) >= 5:
+            print(f"  AR@5  = {format_percentage(recall_at_n[4])}")
+        if len(recall_at_n) >= 10:
+            print(f"  AR@10 = {format_percentage(recall_at_n[9])}")
+
+        print("="*60)
 
         logger.info("Checkpoint testing completed successfully")
 
