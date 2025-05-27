@@ -59,6 +59,9 @@ MODEL_CHOICES = [
     "mssplace-lis",
     "mssplace-lit",
     "mssplace-list",
+    "mssplace-i",
+    "minkloc-multimodal",
+    "minkloc3dv2",
 ]
 
 MODEL_CONFIG_NAMES = {
@@ -66,6 +69,9 @@ MODEL_CONFIG_NAMES = {
     "mssplace-lis": "mssplace-lis.yaml",
     "mssplace-lit": "mssplace-lit.yaml",
     "mssplace-list": "mssplace-list.yaml",
+    "mssplace-i": "mssplace-i.yaml",
+    "minkloc-multimodal": "minkloc-multimodal.yaml",
+    "minkloc3dv2": "minkloc3dv2.yaml",
 }
 
 CHECKPOINT_NAMES = {
@@ -80,6 +86,9 @@ CHECKPOINT_NAMES = {
         "mssplace-lis": "nclt_mssplace_lis.pth",
         "mssplace-lit": "nclt_mssplace_lit.pth",
         "mssplace-list": "nclt_mssplace_list.pth",
+        "mssplace-i": "nclt_mssplace_i.pth",
+        "minkloc-multimodal": "nclt_minkloc_multimodal.pth",
+        "minkloc3dv2": "nclt_minkloc3dv2.pth",
     },
 }
 
@@ -182,6 +191,20 @@ SENSOR_SETUPS = {
             "text_Cam3",
             "text_Cam4",
             "text_Cam5"
+        ],
+        "mssplace-i": [
+            "image_Cam1",
+            "image_Cam2",
+            "image_Cam3",
+            "image_Cam4",
+            "image_Cam5",
+        ],
+        "minkloc-multimodal": [
+            "pointcloud_lidar",
+            "image_Cam5",
+        ],
+        "minkloc3dv2": [
+            "pointcloud_lidar",
         ],
     }
 }
